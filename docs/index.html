@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NeighbourNet — UI Demo</title>
+  <meta name="description" content="NeighbourNet web UI demo (non-functional). Demo only — not a working safety tool." />
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --panel:#12141a;
+      --panel2:#161a22;
+      --text:#f2f4f8;
+      --muted:#b7c0d1;
+      --line:#273044;
+      --btn:#1f6feb;
+      --radius:16px;
+      --pad:16px;
+      --tap:48px;
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --scale:1;
+    }
+
+    /* Layout preview sizes */
+    .layout-phone   { width: 390px; height: 844px; }
+    .layout-phone-xl{ width: 390px; height: 844px; --scale:1.18; }
+    .layout-tablet  { width: 820px; height: 1180px; }
+    .layout-desktop { width: min(1100px, 96vw); height: min(740px, 86vh); }
+    .layout-kiosk   { width: min(1100px, 96vw); height: min(740px, 86vh); }
+
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:var(--font);
+    }
+
+    .page{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:24px 12px;
+      gap:12px;
+    }
+
+    .topbar{
+      width:min(1100px, 96vw);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .menu{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    select{
+      background:var(--panel);
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:14px;
+    }
+
+    #frame{
+      background:linear-gradient(180deg, var(--panel), var(--panel2));
+      border:1px solid var(--line);
+      border-radius:24px;
+      overflow:hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      display:flex;
+      flex-direction:column;
+    }
+
+    #app{
+      height:100%;
+      transform: scale(var(--scale));
+      transform-origin: top left;
+      width: calc(100% / var(--scale));
+      display:flex;
+      flex-direction:column;
+    }
+
+    .app-header{
+      padding:14px 16px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.12);
+      gap:12px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+    }
+    .title strong{ font-size:18px; }
+    .title span{ font-size:13px; color:var(--muted); }
+
+    .header-actions{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:13px;
+      color:var(--text);
+    }
+    .pill button{
+      all:unset;
+      cursor:pointer;
+      color:var(--text);
+    }
+    .pill button:focus{
+      outline:2px solid var(--btn);
+      outline-offset:2px;
+      border-radius:999px;
+    }
+
+    .banner{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 12px;
+      font-size:13px;
+      color:var(--muted);
+      border-bottom:1px solid var(--line);
+      background:rgba(248,81,73,.08);
+      gap:8px;
+    }
+    .banner a{
+      color:var(--text);
+      text-decoration:underline;
+    }
+
+    .app-main{
+      flex:1;
+      display:flex;
+      min-height:0;
+    }
+
+    .screen{
+      flex:1;
+      display:none;
+      min-height:0;
+    }
+    .screen.active{ display:flex; flex-direction:column; }
+
+    .card{
+      margin:16px;
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.03);
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      padding:0 16px 16px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      min-height: var(--tap);
+      padding: 0 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color:var(--text);
+      font-size:16px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      flex:1;
+    }
+    .btn:focus{ outline:2px solid var(--btn); outline-offset:2px; }
+    .btn.safe{ background: rgba(46,160,67,.18); }
+    .btn.help{ background: rgba(248,81,73,.16); }
+    .btn.primary{ background: rgba(31,111,235,.22); }
+
+    .inputbar{
+      display:flex;
+      gap:10px;
+      padding:0 16px 16px;
+    }
+    input[type="text"]{
+      flex:1;
+      min-height: var(--tap);
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      padding: 0 14px;
+      font-size:16px;
+    }
+    input[type="text"]::placeholder{ color: #8ea0c7; }
+
+    .list{
+      padding: 0 16px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow:auto;
+      min-height:0;
+    }
+    .msg{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+      border-radius:16px;
+      padding:12px 12px;
+    }
+    .msg .meta{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .msg p{ margin:0; font-size:16px; }
+
+    .simple-wrap{
+      padding: 18px 16px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .simple-wrap .btn{
+      width:100%;
+      min-height:60px;
+      font-size:18px;
+    }
+    .hint{
+      color:var(--muted);
+      font-size:14px;
+      padding: 0 16px 16px;
+    }
+
+    .mapbox{
+      flex:1;
+      margin:16px;
+      border-radius: var(--radius);
+      border:1px solid var(--line);
+      background:
+        radial-gradient(circle at 20% 30%, rgba(31,111,235,.25), transparent 40%),
+        radial-gradient(circle at 70% 60%, rgba(248,81,73,.22), transparent 45%),
+        radial-gradient(circle at 40% 70%, rgba(46,160,67,.18), transparent 40%),
+        rgba(0,0,0,.18);
+      position:relative;
+      min-height:220px;
+    }
+    .pin{
+      position:absolute;
+      width:12px;height:12px;border-radius:50%;
+      border:2px solid rgba(255,255,255,.65);
+      background: rgba(255,255,255,.25);
+    }
+    .pin.help{ left:70%; top:40%; }
+    .pin.safe{ left:30%; top:65%; }
+    .pin.hazard{ left:45%; top:30%; }
+
+    .toggle{
+      display:flex; align-items:center; gap:10px;
+      padding: 0 16px 0;
+      color:var(--text);
+      font-size:15px;
+    }
+    .toggle input{ width:20px; height:20px; }
+
+    .nav{
+      display:flex;
+      border-top:1px solid var(--line);
+      background:rgba(0,0,0,.10);
+    }
+    .nav button{
+      flex:1;
+      min-height:56px;
+      border:0;
+      background:transparent;
+      color:var(--muted);
+      font-size:14px;
+      cursor:pointer;
+    }
+    .nav button.active{
+      color:var(--text);
+      border-top:2px solid rgba(31,111,235,.65);
+    }
+    .nav button:focus{ outline:2px solid var(--btn); outline-offset:-2px; }
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+    .modal-backdrop.show{ display:flex; }
+    .modal{
+      width:min(520px, 96vw);
+      background:linear-gradient(180deg, var(--panel), var(--panel2));
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+    }
+    .modal h2{ margin:0 0 8px; font-size:18px; }
+    .modal p{ margin:0 0 12px; color:var(--muted); line-height:1.4; }
+    .modal .row{ display:flex; gap:10px; justify-content:flex-end; }
+    .modal .row .btn{ flex:0; min-width:120px; }
+
+    .split{
+      display:flex;
+      gap:0;
+      min-height:0;
+      flex:1;
+    }
+    .pane{
+      flex:1;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    .pane + .pane{ border-left:1px solid var(--line); }
+
+    .sr-only{
+      position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0); border:0;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ scroll-behavior:auto !important; transition:none !important; }
+    }
+
+    .kiosk .inputbar,
+    .kiosk .actions,
+    .kiosk .pill.mode,
+    .kiosk .nav button[data-tab="settings"],
+    .kiosk .nav button[data-tab="help"]{
+      display:none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar" aria-label="Demo controls">
+      <div>NeighbourNet — web UI demo</div>
+      <div class="menu">
+        <label class="sr-only" for="layoutSelect">Layout</label>
+        <select id="layoutSelect" aria-label="Layout">
+          <option value="phone" selected>Phone</option>
+          <option value="phone-xl">Phone (Large text)</option>
+          <option value="tablet">Tablet</option>
+          <option value="desktop">Desktop</option>
+          <option value="kiosk">Kiosk (Read-only)</option>
+        </select>
+
+        <label class="sr-only" for="styleSelect">Interface style</label>
+        <select id="styleSelect" aria-label="Interface style">
+          <option value="chat" selected>Chat</option>
+          <option value="simple">Simple signals</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="frame" class="layout-phone">
+      <div id="app">
+        <div class="app-header">
+          <div class="title">
+            <strong>NeighbourNet</strong>
+            <span id="subtitle">Nearby only</span>
+          </div>
+          <div class="header-actions">
+            <div class="pill">
+              <button id="nearbyInfoBtn" type="button" aria-haspopup="dialog" aria-controls="infoModal">Nearby (i)</button>
+            </div>
+            <div class="pill mode" aria-label="Interface style indicator">
+              <span id="modePill">Chat</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="banner">
+          Demo only — not a working safety tool.
+          <a href="#" id="demoInfoLink">What does this mean?</a>
+        </div>
+
+        <div class="app-main">
+          <section class="screen active" id="screen-first" aria-label="First launch">
+            <div class="card">
+              <h1 style="margin:0 0 8px; font-size:20px;">Experimental demo</h1>
+              <p style="margin:0; color:var(--muted); line-height:1.45;">
+                This is a web-based UI demo for NeighbourNet. It is not a working safety tool.<br><br>
+                Do not rely on this for personal safety or emergencies. Use other communication methods and trusted local resources.
+              </p>
+            </div>
+            <div class="actions">
+              <button class="btn primary" id="btnContinue">Continue</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-nearby" aria-label="Nearby">
+            <div id="nearbyContainer" style="flex:1; min-height:0; display:flex; flex-direction:column;"></div>
+          </section>
+
+          <section class="screen" id="screen-map" aria-label="Map">
+            <div class="toggle">
+              <input type="checkbox" id="shareLocation" />
+              <label for="shareLocation">Share location (approximate)</label>
+            </div>
+            <div class="mapbox" aria-label="Map mock">
+              <div class="pin help" aria-label="Help pin"></div>
+              <div class="pin safe" aria-label="Safe pin"></div>
+              <div class="pin hazard" aria-label="Hazard pin"></div>
+            </div>
+            <div class="actions">
+              <button class="btn primary" id="btnDropPin">Drop pin</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-help" aria-label="Help">
+            <div class="card">
+              <h1 style="margin:0 0 10px; font-size:20px;">Help</h1>
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn" data-kb="cpr">CPR (hands-only)</button>
+                <button class="btn" data-kb="bleeding">Heavy bleeding</button>
+                <button class="btn" data-kb="panic">Panic / anxiety</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-settings" aria-label="Settings">
+            <div class="card">
+              <h1 style="margin:0 0 10px; font-size:20px;">Settings</h1>
+              <p style="margin:0 0 10px; color:var(--muted); line-height:1.45;">
+                These options only change how the demo looks. They do not change how it works.
+              </p>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div>
+                  <div style="font-size:14px; color:var(--muted); margin-bottom:6px;">Interface style</div>
+                  <div class="pill" style="display:inline-flex; gap:10px;">
+                    <button type="button" id="setChat">Chat</button>
+                    <span style="color:var(--muted);">/</span>
+                    <button type="button" id="setSimple">Simple signals</button>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size:14px; color:var(--muted); margin-bottom:6px;">Safety</div>
+                  <button class="btn" id="btnBlocked">Blocked devices</button>
+                  <button class="btn" id="btnClear">Clear local demo data</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <nav class="nav" aria-label="Navigation">
+          <button class="active" data-tab="nearby">Nearby</button>
+          <button data-tab="map">Map</button>
+          <button data-tab="help">Help</button>
+          <button data-tab="settings">Settings</button>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="infoModal" role="dialog" aria-modal="true" aria-label="Information">
+    <div class="modal">
+      <h2 id="modalTitle">About this demo</h2>
+      <p id="modalBody">
+        This is a UI demo. It does not connect to nearby devices. It does not provide safety guarantees.
+      </p>
+      <div class="row">
+        <button class="btn" id="modalClose">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const layoutSelect = document.getElementById('layoutSelect');
+    const styleSelect  = document.getElementById('styleSelect');
+    const frame        = document.getElementById('frame');
+    const modePill     = document.getElementById('modePill');
+    const subtitle     = document.getElementById('subtitle');
+
+    const screens = {
+      first:    document.getElementById('screen-first'),
+      nearby:   document.getElementById('screen-nearby'),
+      map:      document.getElementById('screen-map'),
+      help:     document.getElementById('screen-help'),
+      settings: document.getElementById('screen-settings'),
+    };
+
+    const navButtons = Array.from(document.querySelectorAll('.nav button'));
+    const nearbyContainer = document.getElementById('nearbyContainer');
+
+    const infoModal = document.getElementById('infoModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody  = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+
+    function openModal(title, body){
+      modalTitle.textContent = title;
+      modalBody.textContent = body;
+      infoModal.classList.add('show');
+      modalClose.focus();
+    }
+    function closeModal(){ infoModal.classList.remove('show'); }
+    modalClose.addEventListener('click', closeModal);
+    infoModal.addEventListener('click', (e)=>{ if(e.target === infoModal) closeModal(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeModal(); });
+
+    document.getElementById('demoInfoLink').addEventListener('click', (e)=>{
+      e.preventDefault();
+      openModal('What does “demo only” mean?', 'This is a web-based UI demo. It does not connect to nearby devices, send messages, or provide safety guarantees.');
+    });
+    document.getElementById('nearbyInfoBtn').addEventListener('click', ()=>{
+      openModal('Nearby', 'Nearby means devices close to you. This demo does not connect to other devices.');
+    });
+
+    document.getElementById('btnContinue').addEventListener('click', ()=>{ showScreen('nearby'); });
+
+    document.getElementById('setChat').addEventListener('click', ()=> setStyle('chat'));
+    document.getElementById('setSimple').addEventListener('click', ()=> setStyle('simple'));
+    document.getElementById('btnBlocked').addEventListener('click', ()=> openModal('Blocked devices', 'Demo placeholder. In the real app you will be able to block devices instantly.'));
+    document.getElementById('btnClear').addEventListener('click', ()=> openModal('Clear local data', 'Demo placeholder. In the real app you will be able to clear local data.'));
+
+    document.getElementById('btnDropPin').addEventListener('click', ()=> openModal('Drop pin', 'Demo placeholder. In the real app you will be able to post help/hazard/resource pins.'));
+
+    document.querySelectorAll('[data-kb]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const k = btn.getAttribute('data-kb');
+        const pages = {
+          cpr: '1) Call for help nearby. 2) Push hard and fast. 3) Centre of the chest. General guidance only.',
+          bleeding: '1) Press firmly on the wound. 2) Keep pressure. 3) Seek help. General guidance only.',
+          panic: '1) Breathe slowly. 2) Name 5 things you can see. 3) Find a safe place if possible.'
+        };
+        openModal('Help', pages[k] || 'Demo page');
+      });
+    });
+
+    navButtons.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const tab = btn.getAttribute('data-tab');
+        showScreen(tab);
+      });
+    });
+
+    function showScreen(name){
+      Object.values(screens).forEach(s=> s.classList.remove('active'));
+      if(name === 'nearby') screens.nearby.classList.add('active');
+      if(name === 'map') screens.map.classList.add('active');
+      if(name === 'help') screens.help.classList.add('active');
+      if(name === 'settings') screens.settings.classList.add('active');
+      navButtons.forEach(b=> b.classList.toggle('active', b.getAttribute('data-tab') === name));
+    }
+
+    function renderNearby(){
+      const layout = layoutSelect.value;
+      const style  = styleSelect.value;
+      const split = (layout === 'tablet' || layout === 'desktop' || layout === 'kiosk');
+
+      frame.classList.toggle('kiosk', layout === 'kiosk');
+
+      const chatList = `
+        <div class="list" aria-label="Chat messages">
+          <div class="msg">
+            <div class="meta"><span>Alex</span><span>2h ago</span></div>
+            <p>Anyone else here?</p>
+          </div>
+          <div class="msg">
+            <div class="meta"><span>Sam</span><span>1h ago</span></div>
+            <p>Power’s out on my street.</p>
+          </div>
+        </div>
+        <div class="hint">(Messages are temporary)</div>
+      `;
+
+      const chatActions = `
+        <div class="actions">
+          <button class="btn safe" type="button" onclick="alert('Demo: I\\'m Safe')">I’m Safe</button>
+          <button class="btn help" type="button" onclick="alert('Demo: Need Help')">Need Help</button>
+        </div>
+        <div class="inputbar">
+          <input type="text" placeholder="Message…" aria-label="Message input (demo)" />
+          <button class="btn primary" type="button" style="flex:0; min-width:120px;" onclick="alert('Demo: Send message')">Send</button>
+        </div>
+      `;
+
+      const simpleMode = `
+        <div class="simple-wrap">
+          <button class="btn safe" type="button" onclick="alert('Demo: I\\'m Safe')">I’m Safe</button>
+          <button class="btn help" type="button" onclick="alert('Demo: Need Help')">Need Help</button>
+          <button class="btn primary" type="button" onclick="alert('Demo: Send message')">Send message</button>
+        </div>
+        <div class="hint">(Temporary messages)</div>
+      `;
+
+      const mapPane = `
+        <div class="toggle" style="padding-top:16px;">
+          <input type="checkbox" id="shareLocation2" />
+          <label for="shareLocation2">Share location (approximate)</label>
+        </div>
+        <div class="mapbox" style="margin-top:12px;" aria-label="Map mock (split)">
+          <div class="pin help" aria-label="Help pin"></div>
+          <div class="pin safe" aria-label="Safe pin"></div>
+          <div class="pin hazard" aria-label="Hazard pin"></div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="button" onclick="alert('Demo: Drop pin')">Drop pin</button>
+        </div>
+      `;
+
+      if(split){
+        nearbyContainer.innerHTML = `
+          <div class="split">
+            <div class="pane">
+              ${style === 'chat' ? chatList + chatActions : simpleMode}
+            </div>
+            <div class="pane">
+              ${mapPane}
+            </div>
+          </div>
+        `;
+      } else {
+        nearbyContainer.innerHTML = `
+          ${style === 'chat' ? chatList + chatActions : simpleMode}
+        `;
+      }
+    }
+
+    function setLayout(value){
+      frame.className = '';
+      if(value === 'phone') frame.classList.add('layout-phone');
+      if(value === 'phone-xl') frame.classList.add('layout-phone-xl');
+      if(value === 'tablet') frame.classList.add('layout-tablet');
+      if(value === 'desktop') frame.classList.add('layout-desktop');
+      if(value === 'kiosk') frame.classList.add('layout-kiosk');
+
+      subtitle.textContent = 'Nearby only';
+      renderNearby();
+    }
+
+    function setStyle(value){
+      styleSelect.value = value;
+      modePill.textContent = (value === 'chat') ? 'Chat' : 'Simple';
+      renderNearby();
+    }
+
+    layoutSelect.addEventListener('change', ()=> setLayout(layoutSelect.value));
+    styleSelect.addEventListener('change', ()=> setStyle(styleSelect.value));
+
+    setLayout('phone');
+    setStyle('chat');
+  </script>
+</body>
+</html>
